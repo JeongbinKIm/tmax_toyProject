@@ -57,7 +57,7 @@ int main(int argc, char *argv[])
         cout << "bind() error !" << endl;
     }
 	
-	// 연결요청을 위한 대기상태로 진입
+	// 연결요청을 위한 대기상태로 진입!
 	// 사용될 소켓의 파일디스크럽터에, 연결요청 대기 큐의 크기정보 전달
 	if(listen(serv_sock, 5) == -1)
     {
