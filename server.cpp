@@ -83,7 +83,9 @@ int main(int argc, char *argv[])
 
 	while(1)
 	{
+		
 		event_cnt=epoll_wait(epfd, ep_events, EPOLL_SIZE, -1);
+		
 		if(event_cnt==-1)
 		{
 			cout << "epoll_wait() error" << endl;
@@ -91,7 +93,8 @@ int main(int argc, char *argv[])
 		}
 
 		for(i = 0; i < event_cnt ; i++)
-		{		
+		{	
+			
 			if(ep_events[i].data.fd==serv_sock)
 			{
 				adr_sz=sizeof(clnt_adr);
@@ -105,7 +108,8 @@ int main(int argc, char *argv[])
 				cout << "연결된 클라이언트 : " << clnt_sock << endl;
 			}
 			else{
-				str_len=read(ep_events[i].data.fd, buf, BUF_SIZE);
+				
+				str_len=read(ep_events[i].data.fd, buf, BUF_SIZE+50);
 				
 				if(str_len==0)
 				{
@@ -117,8 +121,10 @@ int main(int argc, char *argv[])
 				else{
 
 					// 변화가 발생한 파일 디스크럽터(클라이언트)에 메시지 재전달
-					for(int j = serv_sock+1; j < fd_max + 1; j++)
+					
+					for(int j = serv_sock+2; j < fd_max + 1; j++)
 					{
+						
 						write(j, buf, str_len);
 					}
 				}
