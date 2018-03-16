@@ -100,7 +100,7 @@ void * send_msg(void * arg)
         send_packet.packing(name_msg);
         
         // 서버로 메세지 전달
-        write(sock, send_packet.message, strlen(name_msg));
+        write(sock, send_packet.message, sizeof(name_msg));
 	}
 
 	return NULL;
@@ -108,7 +108,7 @@ void * send_msg(void * arg)
 
 // read thread main
 void * recv_msg(void * arg)
-{
+{   
     // 서버 소켓
 	int sock = *((int*)arg);
 	
@@ -121,32 +121,25 @@ void * recv_msg(void * arg)
     while(1)
 	{
         // 메세지 리딩
-		str_len = read(sock, name_msg, NAME_SIZE+BUF_SIZE+sizeof(char)+2);
-		
+        
+		str_len = read(sock, name_msg, BUF_SIZE+50);
+        
         // 종료 기준
         if(str_len == -1) 
         {
             return (void*)-1;
         }
         
-        //name_msg[str_len]=0;
+        name_msg[str_len]=0;
 		
-
-		cout<<"client msg_name before unpacking : ";
-		fputs(name_msg, stdout);
-		cout << endl;
-
-
 
         Msg recv_packet;
         recv_packet.unpacking(name_msg);
 
 
         // 전달받은 메세지 출력
-
-        cout<<"최종 에코 출력 : ";
         fputs(recv_packet.message, stdout);
-        cout<<endl;
+        
 	}
     
 	return NULL;
