@@ -96,8 +96,16 @@ void * send_msg(void * arg)
         // 이름 및 메세지 통합 저장
         sprintf(name_msg,"%s %s", name, msg);
 		
+        int cnt=0;
+        for ( ;cnt<sizeof(name_msg);cnt++){
+            if(name_msg[cnt]=='0'){
+                break;
+            }
+        }
+
         Msg send_packet;
-        send_packet.packing(name_msg);
+      //  send_packet.header=cnt;
+      //  send_packet.packing();
         
         // 서버로 메세지 전달
         write(sock, send_packet.message, sizeof(name_msg));
