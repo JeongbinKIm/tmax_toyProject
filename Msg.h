@@ -6,11 +6,15 @@
 class Msg{
 
 public:
+    Msg();
+    ~Msg();
     int header;
-    char message[BUF_SIZE];
-    void unpacking(char packet[]);
+    char message[BUF_SIZE+50];
+    queue<char> unfinished;
+    int unpacking();
 	void packing(char buf[]);
-
+    int seperateHeader();
+    void enQueue(char packet[],int strlen);
 };
 
 #endif
