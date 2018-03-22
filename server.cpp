@@ -80,7 +80,8 @@ int main(int argc, char *argv[])
 	FD_ZERO(&reads);
 	FD_SET(serv_sock,&reads);
 	fd_max=serv_sock;
-
+	Msg *clntMsg[50];
+	
 	while(1)
 	{
 		
@@ -94,7 +95,7 @@ int main(int argc, char *argv[])
 
 		for(i = 0; i < event_cnt ; i++)
 		{	
-			
+			int ep_event_fd = ep_events[i].data.fd;
 			if(ep_events[i].data.fd==serv_sock)
 			{
 				adr_sz=sizeof(clnt_adr);
@@ -105,34 +106,61 @@ int main(int argc, char *argv[])
 				epoll_ctl(epfd, EPOLL_CTL_ADD, clnt_sock, &event);
 				FD_SET(clnt_sock,&reads);
 				if(fd_max<clnt_sock){ fd_max=clnt_sock; }
+				clntMsg[clnt_sock] = new Msg();
 				cout << "연결된 클라이언트 : " << clnt_sock << endl;
 			}
 			else{
 				
-				str_len=read(ep_events[i].data.fd, buf, BUF_SIZE+50);
+				str_len=read(ep_event_fd, buf, BUF_SIZE+50);
 				
 				if(str_len==0)
 				{
-					FD_CLR(ep_events[i].data.fd,&reads);
-					epoll_ctl(epfd, EPOLL_CTL_DEL, ep_events[i].data.fd, NULL);
-					close(ep_events[i].data.fd);
-					cout << "연결 종료된 클라이언트 : " << ep_events[i].data.fd << endl;
+					FD_CLR(ep_event_fd,&reads);
+					epoll_ctl(epfd, EPOLL_CTL_DEL, ep_event_fd, NULL);
+					close(ep_event_fd);
+					delete clntMsg[clnt_sock];
+					cout << "연결 종료된 클라이언트 : " << ep_event_fd << endl;
+
 				}
 				else{
-
-					// 변화가 발생한 파일 디스크럽터(클라이언트)에 메시지 재전달
-					
-					for(int j = serv_sock+2; j < fd_max + 1; j++)
-					{
+					Msg msg = *clntMsg[ep_event_fd];
+					msg.enQueue(buf,str_len);
+					msg.seperateHeader();
+					if(msg.unpacking()==1){
 						
-						write(j, buf, str_len);
+						echo(serv_sock,fd_max,msg);
+					}else{
+						continue;
 					}
+
 				}
 			}
+		}
+	}
+	
+	for(int i=0; i<fd_max; i++){
+		if (clntMsg[clnt_sock]!=NULL){
+			delete clntMsg[clnt_sock];
 		}
 	}
 
 	close(serv_sock);
 	close(epfd);
 	return 0;
+}
+
+
+
+
+void echo(int serv_sock, int fd_max,Msg msg){
+	
+
+
+	for(int j = serv_sock+2; j < fd_max + 1; j++)
+		{
+			write(j, msg.message, msg.header);			
+		}
+	msg.message[0]='0';
+	msg.header=0;
+	
 }
