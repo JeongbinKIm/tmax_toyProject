@@ -18,22 +18,7 @@ using namespace std;
 #define HEADER_SIZE 4
 #define EPOLL_SIZE 50
 void error_handling(char *buf);
-
-void echo(int serv_sock, int fd_max, Msg *msg)
-{
-
-	char packet[BUF_SIZE + NAME_SIZE + HEADER_SIZE];
-
-	(*msg).packet(packet);
-
-	for (int j = serv_sock + 2; j < fd_max + 1; j++)
-	{
-		write(j, packet, (*msg).header + 4);
-	}
-
-	memset((*msg).message, 0, sizeof((*msg).message));
-	(*msg).header = 0;
-}
+void echo(int serv_sock, int fd_max, Msg *msg);
 
 int main(int argc, char *argv[])
 {
@@ -94,9 +79,13 @@ int main(int argc, char *argv[])
 	FD_ZERO(&reads);
 	FD_SET(serv_sock, &reads);
 	fd_max = serv_sock;
+
+	//clntMsg[]: 연결된 클라이언트에서 들어오는 메세지들을 관리하는 메세지 클래스 배열
+	//numClntSock: 연결된 클라이언트들의 수
 	Msg *clntMsg[50];
 	memset(clntMsg, 0, 50 * sizeof(Msg));
 	int numClntSock = 0;
+
 	while (1)
 	{
 
@@ -144,6 +133,7 @@ int main(int argc, char *argv[])
 					numClntSock--;
 					cout << "연결 종료된 클라이언트 : " << ep_event_fd << endl;
 
+					//접속된 클라이언트가 없을 때 종료명령을 받는 코드
 					if (numClntSock == 0)
 					{
 						cout << "접속된 클라이언트가 없습니다. 종료하시겠습니까? (Y|N)" << endl;
@@ -171,17 +161,21 @@ int main(int argc, char *argv[])
 				}
 				else
 				{
-
+					//서버로 들어온 메세지를 받고 클라이언트의 메세지 클래스 안에 있는 큐에 담는다.
 					Msg msg = *clntMsg[ep_event_fd];
 					msg.enQueue(buf, str_len);
+					//메세지의 헤더를 분리(헤더의 길이 이상의 메세지를 받았을 때는 1, 아니면 0을 반환)
 					if (msg.seperateHeader() != 1)
 					{
 						continue;
 					}
+					//헤더의 길이만큼 메세지가 완성되면 완성된 메세지를 배열에 넣는다(성공하면 1, 실패시 0)
 					if (msg.unpacking() == 1)
 					{
+						//에코
 						echo(serv_sock, fd_max, &msg);
 					}
+					//메세지가 완성이 안되면 다시 epoll_wait으로 이동
 					else
 					{
 						continue;
@@ -190,6 +184,7 @@ int main(int argc, char *argv[])
 			}
 		}
 	}
+	//메세지 배열을 초기화
 	for (int i = 0; i < fd_max; i++)
 	{
 		if (clntMsg[i] != 0)
@@ -201,4 +196,22 @@ int main(int argc, char *argv[])
 	close(epfd);
 	exit(0);
 	return 0;
+}
+
+//메세지에 클래스에 있는 완성된 메세지를 헤더를 붙여서 에코
+//에코 후 메세지 클래스의 변수 리셋
+void echo(int serv_sock, int fd_max, Msg *msg)
+{
+
+	char packet[BUF_SIZE + NAME_SIZE + HEADER_SIZE];
+
+	(*msg).packet(packet);
+
+	for (int j = serv_sock + 2; j < fd_max + 1; j++)
+	{
+		write(j, packet, (*msg).header + 4);
+	}
+
+	memset((*msg).message, 0, sizeof((*msg).message));
+	(*msg).header = 0;
 }
