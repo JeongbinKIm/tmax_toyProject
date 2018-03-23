@@ -97,7 +97,7 @@ void *send_msg(void *arg)
         Msg send_packet;
         send_packet.header = sprintf(name_msg, "%s:%s", name, msg) - 1;
         send_packet.packing(name_msg);
-        write(sock, send_packet.message, send_packet.header + 4);
+        write(sock, send_packet.message, send_packet.header + HEADER_SIZE);
     }
 
     return NULL;
@@ -110,7 +110,7 @@ void *recv_msg(void *arg)
     int sock = *((int *)arg);
 
     // 전달할 메시지를 담는 변수
-    char name_msg[NAME_SIZE + BUF_SIZE + 4];
+    char name_msg[NAME_SIZE + BUF_SIZE + HEADER_SIZE];
 
     // 읽을 메세지 길이 정보
     int str_len;
