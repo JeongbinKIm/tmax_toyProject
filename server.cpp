@@ -209,7 +209,7 @@ void echo(int serv_sock, int fd_max, Msg *msg)
 
 	for (int j = serv_sock + 2; j < fd_max + 1; j++)
 	{
-		write(j, packet, (*msg).header + 4);
+		write(j, packet, (*msg).header + HEADER_SIZE);
 	}
 
 	memset((*msg).message, 0, sizeof((*msg).message));
